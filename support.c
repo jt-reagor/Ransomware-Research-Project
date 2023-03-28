@@ -4,23 +4,13 @@
 
 #include "support.h"
 
-extern FILE *infile;
-
-void encrypt(char *input)
+void encrypt(char *infilename)
 {
-    FILE *toEncrypt;
-    if (!(toEncrypt = fopen("./test", "r")))
-    {
-        printf("Error: Couldn't open %s\n", input);
-        exit(8);
-    }
-    fseek(toEncrypt, 0, SEEK_END);
-    int flen = ftell(toEncrypt);
-    printf("Size: %d\n", flen);
-    fseek(toEncrypt, 0, 0);
-    // char line[MAX_LINE];
-    // fgets(line, MAX_LINE, toEncrypt);
-    // printf("%s", line);
+    FILE *infile = fopen(infilename, "r");
+    fseek(infile, 0, SEEK_END);
+    int flen = ftell(infile);
+    // printf("Size: %d\n", flen);
+    fseek(infile, 0, 0);
 
     // make new file and start encryption
     char keyseedc[2 * KEY_LEN + 1];
@@ -30,23 +20,28 @@ void encrypt(char *input)
         printf("Error: Couldn't open keyseed\n");
         exit(8);
     }
-    fgets(keyseedc, 2 * KEY_LEN + 1, keyseedf);
+    int ret = fgets(keyseedc, 2 * KEY_LEN + 1, keyseedf);
     unsigned int keyseedx;
     sscanf(keyseedc, "%x", &keyseedx);
     fclose(keyseedf);
-    printf("Keyseed: %x\n", keyseedx);
+    // printf("Keyseed: %x\n", keyseedx);
 
     // basic encryption algorithm
-    // xors key in then xors by the last chunk of ciphertext
+    // CBC with basic block-cipher
+    // block cipher
 
     unsigned int chunks = (flen + KEY_LEN - 1) / KEY_LEN; // super cool, super fast ceiling division...
-    unsigned int pad = KEY_LEN - flen % KEY_LEN;
-    printf("Splitting into %d chunks with a pad of %d...\n", chunks, pad);
+    unsigned int pad = (KEY_LEN - flen % KEY_LEN) % KEY_LEN;
+    // printf("Splitting into %d chunks with a pad of %d...\n", chunks, pad);
 
-    char buffer[flen + 1];
-    fread(buffer, 1, flen, toEncrypt);
-    buffer[flen] = '\0';
-    printf("Contained in buffer:\n%s\n-------------------------\n", buffer);
+    char buffer[flen + pad + 1];
+    ret = fread(buffer, 1, flen, infile);
+    fclose(infile);
+    for (int i = 0; i <= pad; i++)
+    {
+        buffer[flen + i] = '\0';
+    }
+    // printf("Contained in buffer:\n%s\n-------------------------\n", buffer);
 
     printf("ENCRYPTING...\n");
     unsigned int *ptr = &buffer[0];
@@ -74,11 +69,46 @@ void encrypt(char *input)
         ptr++;
     }
 
-    printf("BUFFER: \n%s\n", buffer);
+    // printf("BUFFER: \n%s\n", buffer);
+
+    FILE *overwrite = fopen(infilename, "w");
+    fwrite(buffer, 1, sizeof(buffer) - 1, overwrite);
+
+    fclose(overwrite);
+}
+
+void decrypt(char *infilename)
+{
+    FILE *infile = fopen(infilename, "r");
+    fseek(infile, 0, SEEK_END);
+    int flen = ftell(infile);
+    // printf("Size: %d\n", flen);
+    fseek(infile, 0, 0);
+
+    // open file and start decryption
+    char keyseedc[2 * KEY_LEN + 1];
+    FILE *keyseedf;
+    if (!(keyseedf = fopen("./keyseed", "r")))
+    {
+        printf("Error: Couldn't open keyseed\n");
+        exit(8);
+    }
+    int ret = fgets(keyseedc, 2 * KEY_LEN + 1, keyseedf);
+    unsigned int keyseedx;
+    sscanf(keyseedc, "%x", &keyseedx);
+    fclose(keyseedf);
+    // printf("Keyseed: %x\n", keyseedx);
+
+    unsigned int chunks = flen / KEY_LEN;
+
+    char buffer[flen + 1];
+    ret = fread(buffer, 1, flen, infile);
+    buffer[flen] = '\0';
+    // printf("Contained in buffer:\n%s\n-------------------------\n", buffer);
 
     printf("DECRYPTING...\n");
     // this reverses the encryption
-    ptr--;
+    unsigned int *ptr = &buffer[flen - KEY_LEN];
     for (int i = chunks - 1; i >= 0; i--)
     {
         // printf("Chunk %d\n", i);
@@ -101,7 +131,10 @@ void encrypt(char *input)
         ptr--;
     }
 
-    printf("BUFFER: \n%s\n", buffer);
+    // printf("BUFFER: \n%s\n", buffer);
 
-    fclose(toEncrypt);
+    FILE *overwrite = fopen(infilename, "w");
+    fwrite(buffer, 1, sizeof(buffer) - 1, overwrite);
+
+    fclose(overwrite);
 }

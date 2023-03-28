@@ -15,9 +15,8 @@ int main(int argc, char *argv[])
         printf("Usage: %s [<input_file>]\n", argv[0]);
     }
 
-    printf("Hello, and welcome to the world's GREATEST ENCRYPTION SYSTEM\n");
+    printf("Hello, and welcome to the world's GREATEST DECRYPTION SYSTEM\n");
 
-    encrypt(infile);
-    // decrypt(infile);
+    decrypt(infile);
     return 0;
 }
