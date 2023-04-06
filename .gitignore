@@ -2,3 +2,5 @@
 /malware.o
 /support.o
 /*.o
+/testenv/*
+/proj*
