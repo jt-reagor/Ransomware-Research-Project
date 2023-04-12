@@ -1,0 +1,16 @@
+Necessary Files:
+- driver.py
+- malware.c
+- support.c
+- support.h
+- supersecretfileorig.txt
+- Makefile
+
+Instructions:
+1. Prepare the executable malware by running make
+2. Run driver.py
+3. Distribute tarballs to users
+
+Decrypter:
+Run "make decrypter" to compile the sample decrypter.
+Decrypter takes a filename as an argument like the malware.
