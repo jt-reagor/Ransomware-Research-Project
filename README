@@ -1,3 +1,11 @@
+======================================
+Author: JT Reagor
+
+Ransomware research project under the
+supervision of Dr. Kenneth Calvert.
+Read the writeups for context.
+======================================
+
 Necessary Files:
 - driver.py
 - malware.c
